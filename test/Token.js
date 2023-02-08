@@ -6,7 +6,7 @@ describe('Token Contract',async()=>{
     const tokens = (n)=>{
         return ethers.utils.parseUnits(n.toString(),'ether')
     }
-    let token,accounts,deployer
+    let token,accounts,deployer,receiver
     beforeEach(async()=>{
         const Token = await ethers.getContractFactory('Token')
         token = await Token.deploy('JANASENA','JSP','1000000')
@@ -14,9 +14,10 @@ describe('Token Contract',async()=>{
 
         accounts = await ethers.getSigners()
         deployer = accounts[0]
+        receiver = accounts[1]
     })
 
-    describe("Deployment",()=>{
+    describe('Deployment',()=>{
         const name = 'JANASENA'
         const symbol = 'JSP'
         const decimals = '18'
@@ -41,6 +42,34 @@ describe('Token Contract',async()=>{
             expect(await token.balanceOf(deployer.address)).to.equal(totalSupply)
         })
     })  
+
+    describe('Sending Toekns',async()=>{
+
+        describe("Success", async()=>{
+            let amount, transaction, result
+            beforeEach(async() => {
+                amount = tokens(50)
+                transaction = await token.connect(deployer).transfer(receiver.address,amount)
+                result = transaction.wait()
+            })
+            it('Transfer Token Balances',async()=>{
+                expect (await token.balanceOf(receiver.address)).to.equal(amount)
+            })
+    
+            it('Emits a Transfer Event',async()=>{
+                await expect(transaction).to.emit(token,'Transfer').withArgs(deployer.address,receiver.address,amount)
+            })
+        })
+
+        describe("Failure",async()=>{
+            it('rejects insufficient balances',async()=>{
+                const invalidAmount =  tokens(10000000)
+                await expect(token.connect(deployer).transfer(receiver.address,invalidAmount)).to.be.reverted
+            })
+
+        })
+      
+    })
 })
 
 
