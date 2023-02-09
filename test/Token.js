@@ -1,12 +1,12 @@
 const { expect } = require("chai");
 const {ethers} = require("hardhat");
 
-describe('Token Contract',async()=>{
+const tokens = (n)=>{
+    return ethers.utils.parseUnits(n.toString(),'ether')
+}
 
-    const tokens = (n)=>{
-        return ethers.utils.parseUnits(n.toString(),'ether')
-    }
-    let token,accounts,deployer,receiver
+describe('Token',async()=>{
+    let token,accounts,deployer,receiver,exchange
     beforeEach(async()=>{
         const Token = await ethers.getContractFactory('Token')
         token = await Token.deploy('JANASENA','JSP','1000000')
@@ -15,6 +15,7 @@ describe('Token Contract',async()=>{
         accounts = await ethers.getSigners()
         deployer = accounts[0]
         receiver = accounts[1]
+        exchange = accounts[2]
     })
 
     describe('Deployment',()=>{
@@ -69,6 +70,32 @@ describe('Token Contract',async()=>{
 
         })
       
+    })
+
+    describe('Approving Tokens',async()=>{
+        let amount, transaction, result
+        beforeEach(async()=>{
+            amount = tokens(50)
+            transaction = await token.connect(deployer).approve(exchange.address,amount)
+            result = transaction.wait()
+        })
+        describe("Success",async()=>{
+            it('allocates an allowance delegated token spending', async()=>{
+                expect(await token.allowance(deployer.address,exchange.address)).to.equal(amount)
+            })
+
+            it('emits the approval event ', async()=>{
+                await expect(transaction).to.emit(token,'Approval').withArgs(deployer.address,exchange.address,amount);
+            })
+
+        })
+
+        describe("Failure",async()=>{
+            it('allocates an allowance delegated token spending', async()=>{
+                expect(await token.allowance(deployer.address,exchange.address)).to.equal(amount)
+            })
+        })
+
     })
 })
 
