@@ -1,5 +1,6 @@
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
 contract Token {
     string public name;
     string public symbol;
@@ -30,7 +31,7 @@ contract Token {
         emit Approval(msg.sender,_spender,_value);
         return true;
     }
-    
+
     function _transfer(address _from,address _to,uint256 _value) internal {
         require(_to != address(0), "not a valid address");
         balanceOf[_from] = balanceOf[_from] - _value;
