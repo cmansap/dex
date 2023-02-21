@@ -68,6 +68,42 @@ describe('Exchange',async()=>{
         })
     })  
     
+    describe('Withdraw Tokens',()=>{
+
+        let transaction,result
+        let amount = tokens(10)
+        
+
+       describe("Success", async()=>{
+
+            beforeEach(async()=>{
+                transaction = await token1.connect(user1).approve(exchange.address,amount)
+                result = await transaction.wait()
+
+                transaction = await exchange.connect(user1).depositToken(token1.address,amount)
+                result = await transaction.wait()
+
+                transaction = await exchange.connect(user1).withdrawToken(token1.address,amount)
+                result = await transaction.wait()
+            })
+            it('withdraws token funds',async()=>{
+                expect(await token1.balanceOf(exchange.address)).to.be.equal(0)
+                expect(await exchange.tokens(token1.address,user1.address)).to.equal(0)
+            })
+
+            it('emits a Withdrae event',async()=>{
+                await expect(transaction).to.emit(exchange,'Withdraw').withArgs(token1.address,user1.address,amount,0)
+            })
+       })
+
+       describe("Failure", async()=>{
+
+            it('fails for insufficient balance',async()=>{
+                await expect(exchange.connect(user1).withdrawToken(token1.address,amount)).to.be.reverted
+            })
+           
+        })
+    }) 
 })
 
 
